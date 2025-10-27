@@ -24,6 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -62,7 +63,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Apply the app's theme.
             Assign4_1Theme {
-                LifecycleScreen(viewModel = viewModel)
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    LifecycleScreen(viewModel = viewModel, modifier = Modifier.padding(innerPadding))
+                }
             }
         }
     }
@@ -79,7 +82,7 @@ class MyViewModel: ViewModel() {
  * @param lifecycleOwner The LifecycleOwner (typically the Activity) whose lifecycle will be observed.
  */
 @Composable
-fun LifecycleScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current, viewModel: MyViewModel = MyViewModel()) {
+fun LifecycleScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current, viewModel: MyViewModel = MyViewModel(), modifier: Modifier) {
     // A constant for logging from within this Composable.
     val TAG = "ActivityStateTransition"
 
@@ -119,28 +122,34 @@ fun LifecycleScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
         }
     }
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(modifier = modifier.fillMaxSize()) {
         items(viewModel.events.size){ index ->
             Text(
                 text = "${viewModel.events[index].timestamp} - ${viewModel.events[index].name}",
-                textAlign = TextAlign.Center)
+                textAlign = TextAlign.Center,
+                color = colorCode(viewModel.events[index].name))
         }
     }
 }
 
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Assign4_1Theme {
-        Greeting("Android")
+fun colorCode(status: String): Color {
+    return when (status) {
+        "ON_CREATE" -> Color.Blue
+        "ON_START" -> Color.Green
+        "ON_RESUME" -> Color.Cyan
+        "ON_PAUSE" -> Color.Yellow
+        "ON_STOP" -> Color.Magenta
+        "ON_DESTROY" -> Color.Red
+        else -> Color.Gray
     }
 }
+
+
+
+//@Preview(showBackground = true)
+//@Composable
+//fun GreetingPreview() {
+//    Assign4_1Theme {
+//        LifecycleScreen()
+//    }
+//}
