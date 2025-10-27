@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,8 +38,6 @@ import kotlin.text.format
 import java.util.Locale
 
 
-
-
 data class LifeCycleEvent(
     val name: String,
     val timestamp: String
@@ -48,6 +47,7 @@ class MainActivity : ComponentActivity() {
     // Define a constant for our Logcat tag.
     // This helps in filtering messages specifically for this app.
     private val TAG = "ActivityStateTransition"
+    private val viewModel: MyViewModel by viewModels()
 
     /**
      * `onCreate` is the very first method called when the activity is created.
@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Apply the app's theme.
             Assign4_1Theme {
-                LifecycleScreen()
+                LifecycleScreen(viewModel = viewModel)
             }
         }
     }
@@ -79,10 +79,9 @@ class MyViewModel: ViewModel() {
  * @param lifecycleOwner The LifecycleOwner (typically the Activity) whose lifecycle will be observed.
  */
 @Composable
-fun LifecycleScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current) {
+fun LifecycleScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current, viewModel: MyViewModel = MyViewModel()) {
     // A constant for logging from within this Composable.
     val TAG = "ActivityStateTransition"
-    val viewModel = MyViewModel()
 
     // `DisposableEffect` is a side-effect Composable used for managing resources
     // that need to be cleaned up when the composable leaves the screen (is "disposed").
