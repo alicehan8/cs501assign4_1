@@ -63,6 +63,8 @@ class MainActivity : ComponentActivity() {
     // Define a constant for our Logcat tag.
     // This helps in filtering messages specifically for this app.
     private val TAG = "ActivityStateTransition"
+
+    // Initialize ViewModel here so that it will persist across config changes
     private val viewModel: MyViewModel by viewModels()
 
     /**
@@ -78,15 +80,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Apply the app's theme.
             Assign4_1Theme {
-//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     LifecycleTracker(viewModel = viewModel)
                     Screen(viewModel = viewModel, modifier = Modifier)
-//                }
             }
         }
     }
 }
 
+// ViewModel to store log of all events and whether or not to show the snackbar notifs
 class MyViewModel: ViewModel() {
     var events by mutableStateOf(emptyList<LifeCycleEvent>())
     var showSnackbar by mutableStateOf(true)
@@ -104,21 +105,13 @@ fun LifecycleTracker(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.curren
     // A constant for logging from within this Composable.
     val TAG = "ActivityStateTransition"
 
-    // `DisposableEffect` is a side-effect Composable used for managing resources
-    // that need to be cleaned up when the composable leaves the screen (is "disposed").
-    // It's perfect for adding and removing observers.
-    // The `key1 = lifecycleOwner` means this effect will re-run if the lifecycleOwner changes.
+    // use for observing lifecycle events
     DisposableEffect(lifecycleOwner) {
         // Create an observer that logs lifecycle events.
         val observer = LifecycleEventObserver { _, event ->
-            // We can log the event that the Composable's observer receives.
-            // This shows how a Composable can react to the Activity's state.
             Log.d(TAG, "[Composable] Observed Event: ${event.name}")
 
-            // 1. Get current time in milliseconds
             val timestampMillis = System.currentTimeMillis()
-
-            // 2. Format the timestamp into a readable string (e.g., "14:35:10.456")
             val simpleDateFormat = SimpleDateFormat(
                 "HH:mm:ss.SSS",
                 Locale.getDefault()
@@ -130,9 +123,8 @@ fun LifecycleTracker(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.curren
 
         // Add the observer to the lifecycle of the owner (our Activity).
         lifecycleOwner.lifecycle.addObserver(observer)
-        // The `onDispose` block is crucial. It's called when the Composable
-        // is removed from the composition. We must clean up our observer here
-        // to prevent memory leaks.
+
+        // Cleanup to ensure no memory leak
         onDispose {
             Log.d(TAG, "[Composable] Disposing Effect. Removing observer.")
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -140,6 +132,7 @@ fun LifecycleTracker(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.curren
     }
 }
 
+//function to cleanly color code each of the statuses
 fun colorCode(status: String): Color {
     return when (status) {
         "ON_CREATE" -> Color.Blue
@@ -157,6 +150,7 @@ fun Screen(viewModel: MyViewModel = MyViewModel(), modifier: Modifier){
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
+    // Snackbar for new events when they are added to the list
     LaunchedEffect(viewModel.events.size, viewModel.showSnackbar) {
         // Get the latest event, if the list is not empty.
         viewModel.events.lastOrNull()?.let { lastEvent ->
@@ -173,31 +167,16 @@ fun Screen(viewModel: MyViewModel = MyViewModel(), modifier: Modifier){
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         content = { innerPadding ->
-            Column(
-                modifier = modifier.padding(innerPadding),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                LazyColumn(modifier = modifier
-                    .weight(8f)
-                    .fillMaxSize()) {
-                    items(viewModel.events.size) { index ->
-                        Text(
-                            text = "${viewModel.events[index].timestamp} - ${viewModel.events[index].name}",
-                            textAlign = TextAlign.Center,
-                            color = colorCode(viewModel.events[index].name)
-                        )
-                    }
+            LazyColumn(modifier = modifier
+                .padding(innerPadding)
+                .fillMaxSize()) {
+                items(viewModel.events.size) { index ->
+                    Text(
+                        text = "${viewModel.events[index].timestamp} - ${viewModel.events[index].name}",
+                        textAlign = TextAlign.Center,
+                        color = colorCode(viewModel.events[index].name)
+                    )
                 }
-//                Row(modifier = modifier
-//                    .weight(2f)
-//                    .background(color=Color.Gray)
-//                    .fillMaxSize()) {
-//                    Text("Settings", textAlign = TextAlign.Left, fontSize = 24.sp, color = Color.White)
-//                    Button(onClick = { viewModel.toggle() }, modifier = modifier.background(color=Color.Blue)) {
-//                        Text(text = if (viewModel.showSnackbar) "Hide Snackbar" else "Show Snackbar", color = Color.White)
-//                    }
-//                }
             }
         },
         bottomBar = {
@@ -220,7 +199,6 @@ fun Screen(viewModel: MyViewModel = MyViewModel(), modifier: Modifier){
     )
 
 }
-
 
 //@Preview(showBackground = true)
 //@Composable
